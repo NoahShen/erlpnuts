@@ -1,2 +1,0 @@
-io:format("Running Erlang File~n").
-code:add_patha("./lib/mochiweb").
