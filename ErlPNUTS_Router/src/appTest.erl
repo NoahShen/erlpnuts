@@ -19,7 +19,7 @@ start() ->
     mochiweb_http:start([
         {name, ?MODULE},
         {ip, any},
-        {port, 6500},
+        {port, 8080},
         {loop, fun(Req) ->
             error_logger:info_report([helloweb, {req, Req}]),
             Req:ok({"text/plain", "hello world"})
