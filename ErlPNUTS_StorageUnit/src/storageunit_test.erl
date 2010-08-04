@@ -19,7 +19,7 @@ start() ->
 		{poolSize, 1},
 		{host, "localhost"},
 		{port, 27017},
-		{collection, "testdb"}]).
+		{database, "testdb"}]).
 
 stop() ->
     void.
