@@ -1,6 +1,6 @@
 -module(emongo_test).
 
--compile(export_all).
+-export([start/0]).
 
 start() ->
 	application:start(emongo),
@@ -14,5 +14,5 @@ start() ->
 %% 		[{"field1", 1}], 
 %% 		[{"$set", [{"newFiled", "justNewFiled"}]}]).
 
-	emongo:find_all(pool1, "table1", []).
+	emongo:find_all(pool1, "table1", [], [{ distinct, "table1", key, "rev"}]).
 %%  emongo:insert(pool1, "table1", [{"field1", "value1"}, {"field2", "value2"}]).

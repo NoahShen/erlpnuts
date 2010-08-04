@@ -3,4 +3,4 @@
 		 poolSize=1,
          host,
          port=27017,
-         collection}).
+         database}).
