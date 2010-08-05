@@ -80,7 +80,7 @@ do_Get(Collection, Key, Opts, State) ->
 	case Opts of
 		last_revision ->
 			%%TODO
-			ok;
+			{ok, []};
 		{revision, Rev} ->
 			getByRev(Mong, Collection, Key, Rev);
 		_ ->
@@ -95,18 +95,52 @@ getByRev(Mong, Collection, Key, Rev) ->
 	case Result of
 		{ok, []} ->
 %% 			emongo:find_all(PoolName, "Revision_Collection", [{"key", Key}, {"rev", Rev}]),
-			Func1 = "function(obj,out) { if (obj.fieldversion >= out.rev && obj.fieldversion <= ",
-			Func2 = ") {out.fieldversion = obj.fieldversion; out.fieldvalue = obj.fieldvalue;} }",
-			ReduceFunc = string:concat(string:concat(Func1, integer_to_list(Rev)), Func2),
+			Func0 = "function(obj,out) { if (obj.fieldid == \"",
+			Func1 = string:concat(Func0, Key),
+			Func2 = string:concat(Func1, "\" && obj.fieldversion >= out.fieldversion && obj.fieldversion <= "),
+			Func3 = string:concat(Func2, integer_to_list(Rev)),
+			Func4 = string:concat(Func3, ") {out.fieldversion = obj.fieldversion; out.fieldvalue = obj.fieldvalue; out.tablename = obj.tablename; out.fieldid = obj.fieldid} }"),
+%% 			io:format("~p~n", [Func4]),
 			GroupRes = Mong:group("rev", 
-								[{"key", Key}],
+								[{"fieldname", 1}],
 								{code, 
-									ReduceFunc, 
+									Func4, 
 									[]},
-								[{"rev", 0}],
-					   		[]);
-			
-		{ok, [_]} ->
+								[{"fieldversion", 0}],
+					   		[]),
+			case GroupRes of
+				[{<<"retval">>, {array, ResultArr}}, _, _, _] ->
+					case ResultArr of 
+						[] ->
+							{ok, []};
+						_ ->
+							T = parseRecord(ResultArr),
+							
+							case T of
+								[] ->
+									{ok, []};
+								_ ->
+									{ok, [{<<"key">>, list_to_binary(Key)} | T]}
+							end
+					end;
+				_ ->
+					{ok, []}
+			end;
+		{ok, _} ->
 			Result
+	end.
+
+parseRecord([]) ->
+	[];
+
+parseRecord([R | T]) ->
+	FieldName = proplists:get_value(<<"fieldname">>, R),
+	FieldValue = proplists:get_value(<<"fieldvalue">>, R),
+	
+	case FieldValue of
+		undefined ->
+			parseRecord(T);
+		_ ->
+			[{FieldName, FieldValue} | parseRecord(T)]
 	end.
 	
