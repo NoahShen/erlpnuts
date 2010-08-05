@@ -15,8 +15,7 @@
 %%
 start() ->
 	storageunit:start_link([
-		{poolName, pool1},
-		{poolSize, 1},
+		{poolName, erlPNUTS},
 		{host, "localhost"},
 		{port, 27017},
 		{database, "testdb"}]).
