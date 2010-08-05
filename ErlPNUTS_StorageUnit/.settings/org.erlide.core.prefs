@@ -1,8 +1,8 @@
-#Wed Aug 04 09:59:14 CST 2010
+#Thu Aug 05 11:18:19 CST 2010
 backend_version=R13B
 eclipse.preferences.version=1
 external_includes=
 external_modules=
-include_dirs=include/emongo;include;
+include_dirs=include/erlmongo;include/emongo;include;
 output_dir=ebin
-source_dirs=src/emongo;src;
+source_dirs=src/erlmongo;src/emongo;src;
