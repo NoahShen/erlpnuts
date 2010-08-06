@@ -22,7 +22,7 @@ start() ->
 		{database, "testdb"}]).
 
 get_test() ->
-	storageunit:get("User", "Noah", {revision, 1}).
+	storageunit:get("user", "Noah", {revision, 4}).
 
 stop() ->
     void.

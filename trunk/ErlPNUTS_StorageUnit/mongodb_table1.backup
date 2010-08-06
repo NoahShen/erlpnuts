@@ -1,5 +1,0 @@
-{ "_id" : { "$oid" : "4c57bdc0d40f000000000fd7" }, "field1" : 1, "newFiled" : "justNewFiled" }
-{ "_id" : { "$oid" : "4c59256751070000000037b5" }, "fieldId" : "noah", "name" : "field", "value" : "value1", "rev" : 1 }
-{ "_id" : { "$oid" : "4c59259e51070000000037b6" }, "fieldId" : "noah", "name" : "field2", "value" : "value2", "rev" : 1 }
-{ "_id" : { "$oid" : "4c5925aa51070000000037b7" }, "fieldId" : "noah", "name" : "field1", "value" : "value1_1", "rev" : 2 }
-{ "_id" : { "$oid" : "4c592e905a31000000000c7f" }, "tablename" : "User", "fieldid" : "Noah", "field" : [ { "fieldname" : "name", "fieldvalues" : [ { "fieldValue" : "Noah", "rev" : 1 } ] }, { "fieldname" : "password", "fieldvalues" : [ { "fieldValue" : "123", "rev" : 1 }, { "fieldValue" : "1234", "rev" : 2 } ] } ] }

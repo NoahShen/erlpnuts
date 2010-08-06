@@ -1,4 +1,4 @@
-{ "_id" : { "$oid" : "4c5a1d078f59000000001bbd" }, "tablename" : "User", "fieldid" : "Noah", "fieldname" : "name", "fieldvalue" : "Noah", "fieldversion" : 1 }
-{ "_id" : { "$oid" : "4c5a1d188f59000000001bbe" }, "tablename" : "User", "fieldid" : "Noah", "fieldname" : "password", "fieldvalue" : "123", "fieldversion" : 1 }
-{ "_id" : { "$oid" : "4c5a1d1e8f59000000001bbf" }, "tablename" : "User", "fieldid" : "Noah", "fieldname" : "password", "fieldvalue" : "1234", "fieldversion" : 2 }
-{ "_id" : { "$oid" : "4c5a1e758f59000000001bc0" }, "tablename" : "User", "fieldid" : "Noah", "fieldname" : "password", "fieldvalue" : "12345", "fieldversion" : 3 }
+{ "_id" : { "$oid" : "4c5a1d078f59000000001bbd" }, "collection" : "user", "rev_id" : "Noah", "fieldname" : "name", "fieldvalue" : "Noah", "fieldrevision" : 1 }
+{ "_id" : { "$oid" : "4c5a1d188f59000000001bbe" }, "collection" : "user", "rev_id" : "Noah", "fieldname" : "password", "fieldvalue" : "123", "fieldrevision" : 1 }
+{ "_id" : { "$oid" : "4c5a1d1e8f59000000001bbf" }, "collection" : "user", "rev_id" : "Noah", "fieldname" : "password", "fieldvalue" : "1234", "fieldrevision" : 2 }
+{ "_id" : { "$oid" : "4c5a1e758f59000000001bc0" }, "collection" : "user", "rev_id" : "Noah", "fieldname" : "password", "fieldvalue" : "12345", "fieldrevision" : 3 }
