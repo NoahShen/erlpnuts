@@ -8,6 +8,10 @@
         {mongodb,
 		 dboptions=#dbOptions{}}).
 
+-record(result,
+        {revCorrect = false,
+		fields = []}).
+
 -behaviour(gen_server).
 
 %% External exports
@@ -25,14 +29,8 @@ start_link(State) ->
 
 init(State) ->
 	{ok, Options} = storageunit_options:parse_dboptions(State),
-%%     application:start(emongo),
-	application:start(erlmongo),
 	
-%% 	emongo:add_pool(Options#dbOptions.poolName, 
-%% 					Options#dbOptions.host, 
-%% 					Options#dbOptions.port, 
-%% 					Options#dbOptions.database,
-%% 					Options#dbOptions.poolSize),
+	application:start(erlmongo),
 	
 	mongodb:singleServer(Options#dbOptions.poolName, string:concat(string:concat(Options#dbOptions.host, ":"), integer_to_list(Options#dbOptions.port))),
 	mongodb:connect(Options#dbOptions.poolName),
@@ -60,7 +58,6 @@ handle_info(_Info, State) ->
 	{noreply, State}.
 
 terminate(_Reason, State) ->
-%% 	emongo:del_pool(State#dbOptions.poolName),
 	DbOpts = State#state.dboptions,
 	mongodb:deleteConnection(DbOpts#dbOptions.poolName),
 	ok.
@@ -84,43 +81,35 @@ do_Get(Collection, Key, Opts, State) ->
 		{revision, Rev} ->
 			getByRev(Mong, Collection, Key, Rev);
 		_ ->
-			Mong:findOne(Collection, [{"key", Key}])
-%% 			emongo:find_all(PoolName, Collection, [{"key", Key}])
-		
+			Mong:findOne(Collection, [{"key", Key}])		
 	end.
 
 getByRev(Mong, Collection, Key, Rev) ->
-%% 	Result = emongo:find_all(PoolName, Collection, [{"key", Key}, {"rev", Rev}]),
 	Result = Mong:findOne(Collection, [{"key", Key}, {"rev", Rev}]),
 	case Result of
 		{ok, []} ->
-%% 			emongo:find_all(PoolName, "Revision_Collection", [{"key", Key}, {"rev", Rev}]),
-			Func0 = "function(obj,out) { if (obj.fieldid == \"",
-			Func1 = string:concat(Func0, Key),
-			Func2 = string:concat(Func1, "\" && obj.fieldversion >= out.fieldversion && obj.fieldversion <= "),
-			Func3 = string:concat(Func2, integer_to_list(Rev)),
-			Func4 = string:concat(Func3, ") {out.fieldversion = obj.fieldversion; out.fieldvalue = obj.fieldvalue; out.tablename = obj.tablename; out.fieldid = obj.fieldid} }"),
-%% 			io:format("~p~n", [Func4]),
+
+			Func4 = io_lib:format("function(obj,out) { if (obj.fieldversion >= out.fieldversion && obj.fieldversion <= ~s) {out.fieldversion = obj.fieldversion; out.fieldvalue = obj.fieldvalue; out.tablename = obj.tablename; out.fieldid = obj.fieldid;} }", 
+								  [integer_to_list(Rev)]),
 			GroupRes = Mong:group("rev", 
 								[{"fieldname", 1}],
 								{code, 
 									Func4, 
 									[]},
 								[{"fieldversion", 0}],
-					   		[]),
+					   			[{"cond", [{"tablename", Collection}, {"fieldid", Key}]}]
+							),
 			case GroupRes of
 				[{<<"retval">>, {array, ResultArr}}, _, _, _] ->
 					case ResultArr of 
 						[] ->
 							{ok, []};
 						_ ->
-							T = parseRecord(ResultArr),
-							
-							case T of
-								[] ->
-									{ok, []};
-								_ ->
-									{ok, [{<<"key">>, list_to_binary(Key)} | T]}
+							case parseRecord(Rev, ResultArr) of
+								{true, Fields} ->
+									{ok, [{<<"key">>, list_to_binary(Key)}, {<<"rev">>, Rev} | Fields]};
+								{false, _} ->
+									{ok, []}
 							end
 					end;
 				_ ->
@@ -130,17 +119,30 @@ getByRev(Mong, Collection, Key, Rev) ->
 			Result
 	end.
 
-parseRecord([]) ->
-	[];
+parseRecord(Rev, ResultArr) ->
+	parseRecord(Rev, ResultArr, #result{}).
 
-parseRecord([R | T]) ->
+parseRecord(_Rev, [], Result) ->
+	{Result#result.revCorrect, Result#result.fields};
+
+parseRecord(Rev, [R | T], Result) ->
 	FieldName = proplists:get_value(<<"fieldname">>, R),
 	FieldValue = proplists:get_value(<<"fieldvalue">>, R),
+	Fieldversion = proplists:get_value(<<"fieldversion">>, R),
 	
 	case FieldValue of
 		undefined ->
-			parseRecord(T);
+			parseRecord(Rev, T);
 		_ ->
-			[{FieldName, FieldValue} | parseRecord(T)]
+			if 
+				Fieldversion == Rev ->
+					parseRecord(Rev, T, 
+								#result{revCorrect = true, 
+										fields = [{FieldName, FieldValue} | Result#result.fields]});
+				true ->
+					parseRecord(Rev, T, 
+								#result{revCorrect = Result#result.revCorrect, 
+										fields = [{FieldName, FieldValue} | Result#result.fields]})
+			end
 	end.
 	
