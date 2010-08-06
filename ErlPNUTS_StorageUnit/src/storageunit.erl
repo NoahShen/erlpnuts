@@ -81,23 +81,23 @@ do_Get(Collection, Key, Opts, State) ->
 		{revision, Rev} ->
 			getByRev(Mong, Collection, Key, Rev);
 		_ ->
-			Mong:findOne(Collection, [{"key", Key}])		
+			Mong:findOne(Collection, [{"_key", Key}, {"_update", "available"}])		
 	end.
 
 getByRev(Mong, Collection, Key, Rev) ->
-	Result = Mong:findOne(Collection, [{"key", Key}, {"rev", Rev}]),
+	Result = Mong:findOne(Collection, [{"_key", Key}, {"rev", Rev}, {"_update", "available"}]),
 	case Result of
 		{ok, []} ->
 
-			Func4 = io_lib:format("function(obj,out) { if (obj.fieldversion >= out.fieldversion && obj.fieldversion <= ~s) {out.fieldversion = obj.fieldversion; out.fieldvalue = obj.fieldvalue; out.tablename = obj.tablename; out.fieldid = obj.fieldid;} }", 
+			Func4 = io_lib:format("function(obj,out) { if (obj.fieldrevision >= out.fieldrevision && obj.fieldrevision <= ~s) {out.fieldrevision = obj.fieldrevision; out.fieldvalue = obj.fieldvalue; out.collection = obj.collection; out.rev_id = obj.rev_id;} }", 
 								  [integer_to_list(Rev)]),
 			GroupRes = Mong:group("rev", 
 								[{"fieldname", 1}],
 								{code, 
 									Func4, 
 									[]},
-								[{"fieldversion", 0}],
-					   			[{"cond", [{"tablename", Collection}, {"fieldid", Key}]}]
+								[{"fieldrevision", 0}],
+					   			[{"cond", [{"collection", Collection}, {"rev_id", Key}]}]
 							),
 			case GroupRes of
 				[{<<"retval">>, {array, ResultArr}}, _, _, _] ->
@@ -107,7 +107,7 @@ getByRev(Mong, Collection, Key, Rev) ->
 						_ ->
 							case parseRecord(Rev, ResultArr) of
 								{true, Fields} ->
-									{ok, [{<<"key">>, list_to_binary(Key)}, {<<"rev">>, Rev} | Fields]};
+									{ok, [{<<"_key">>, list_to_binary(Key)}, {<<"rev">>, Rev} | Fields]};
 								{false, _} ->
 									{ok, []}
 							end
@@ -128,14 +128,14 @@ parseRecord(_Rev, [], Result) ->
 parseRecord(Rev, [R | T], Result) ->
 	FieldName = proplists:get_value(<<"fieldname">>, R),
 	FieldValue = proplists:get_value(<<"fieldvalue">>, R),
-	Fieldversion = proplists:get_value(<<"fieldversion">>, R),
+	Fieldrevision = proplists:get_value(<<"fieldrevision">>, R),
 	
 	case FieldValue of
 		undefined ->
 			parseRecord(Rev, T);
 		_ ->
 			if 
-				Fieldversion == Rev ->
+				Fieldrevision == Rev ->
 					parseRecord(Rev, T, 
 								#result{revCorrect = true, 
 										fields = [{FieldName, FieldValue} | Result#result.fields]});
