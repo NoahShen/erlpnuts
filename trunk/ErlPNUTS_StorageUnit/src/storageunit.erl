@@ -161,11 +161,9 @@ do_Put(Collection, Key, Json, Opts, State) ->
 	Mong = State#state.mongodb,
 	case Opts of
 		{revision, Rev} ->
-			putByRev(Mong, Collection, Key, Json, Rev);
+			putByRev(Collection, Key, Json, Rev, Mong);
 		_ ->
-			ok
-%% 			TODO
-%% 			putByRev(Collection, Key, Json, Rev, Mong)
+			putAny(Collection, Key, Json, Mong)
 	end.
 
 putByRev(Collection, Key, Json, Rev, Mong) -> 
@@ -181,11 +179,27 @@ putByRev(Collection, Key, Json, Rev, Mong) ->
 			{error, [{"_key", Key}, {"_rev_now", OldRev}]}
 	end.
 	
-
+putAny(Collection, Key, Json, Mong) ->
+	{ok, R} = Mong:findOne(Collection, [{"_key", Key}], [{"_rev", 1}]),
+	OldRev = proplists:get_value(<<"_rev">>, R),
+	
+	NewRev = OldRev + 1,
+	ok = Mong:update(Collection, [{"_key", Key}, {"_rev", OldRev}], [parseJson2Doc(Json) | {"_rev", {set, NewRev}}], []),
+	{ok, [{"_key", Key}, {"_rev", NewRev}]}.
+	
+	
 parseJson2Doc(Json) ->
 	lists:map(fun({Field, Value}) ->
 					  {Field, {set, Value}}
 					  end, Json).
 
-
+put2Rev(Collection, Key, Json, Rev, Mong) ->
+	lists:map(fun({Field, Value}) ->
+					  Mong:save("rev", [{"collection", Collection}, 
+										{"rev_id", Key},
+										{"fieldname", Field},
+										{"fieldvalue", Value},
+										{"fieldrevision", Rev}]),
+					  {Field, Value}
+					  end, Json).
 
