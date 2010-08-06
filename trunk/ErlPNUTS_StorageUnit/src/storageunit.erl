@@ -22,6 +22,8 @@
 
 -export([get/2, get/3]).
 
+-export([put/3, put/4]).
+
 %% @spec start_link() -> ServerRet
 start_link(State) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, State, []).
@@ -83,7 +85,7 @@ do_Get(Collection, Key, Opts, State) ->
 		{revision, Rev} ->
 			getByRev(Mong, Collection, Key, Rev);
 		_ ->
-			Mong:findOne(Collection, [{"_key", Key}])		
+			Mong:findOne(Collection, [{"_key", Key}])
 	end.
 
 getByRev(Mong, Collection, Key, Rev) ->
@@ -148,13 +150,42 @@ parseRecord(Rev, [R | T], Result) ->
 			end
 	end.
 
+put(Collection, Key, Json) ->
+	put(Collection, Key, Json, []).
+
+put(Collection, Key, Json, Opts) ->
+	gen_server:call(?MODULE, {put, Collection, Key, Json, Opts}).
+
 
 do_Put(Collection, Key, Json, Opts, State) ->
-%% 	Mong = State#state.mongodb,
-%% 	case Opts of
-%% 		{revision, Rev} ->
-%% 			getByRev(Mong, Collection, Key, Rev);
-%% 		_ ->
-%% 			Mong:findOne(Collection, [{"_key", Key}])		
-%% 	end.
-	ok.
+	Mong = State#state.mongodb,
+	case Opts of
+		{revision, Rev} ->
+			putByRev(Mong, Collection, Key, Json, Rev);
+		_ ->
+			ok
+%% 			TODO
+%% 			putByRev(Collection, Key, Json, Rev, Mong)
+	end.
+
+putByRev(Collection, Key, Json, Rev, Mong) -> 
+	{ok, R} = Mong:findOne(Collection, [{"_key", Key}], [{"_rev", 1}]),
+	OldRev = proplists:get_value(<<"_rev">>, R),
+	
+	if 
+		OldRev == Rev ->
+			NewRev = OldRev + 1,
+			ok = Mong:update(Collection, [{"_key", Key}, {"_rev", OldRev}], [parseJson2Doc(Json) | {"_rev", {set, NewRev}}], []),
+			{ok, [{"_key", Key}, {"_rev", NewRev}]};
+		true ->
+			{error, [{"_key", Key}, {"_rev_now", OldRev}]}
+	end.
+	
+
+parseJson2Doc(Json) ->
+	lists:map(fun({Field, Value}) ->
+					  {Field, {set, Value}}
+					  end, Json).
+
+
+
