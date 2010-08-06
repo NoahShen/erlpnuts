@@ -1,6 +1,7 @@
 %% Author: noah
 -module(storageunit_test).
 
+-compile(export_all).
 %%
 %% Include files
 %%
@@ -8,7 +9,7 @@
 %%
 %% Exported Functions
 %%
--export([start/0, stop/0]).
+%% -export([start/0, stop/0]).
 
 %%
 %% API Functions
@@ -19,6 +20,9 @@ start() ->
 		{host, "localhost"},
 		{port, 27017},
 		{database, "testdb"}]).
+
+get_test() ->
+	storageunit:get("User", "Noah", {revision, 1}).
 
 stop() ->
     void.
