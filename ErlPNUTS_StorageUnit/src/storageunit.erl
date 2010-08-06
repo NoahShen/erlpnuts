@@ -45,6 +45,8 @@ handle_call(_Request, _From, State) ->
 	Reply = case _Request of
 		{get, Collection, Key, Opts} ->
 			do_Get(Collection, Key, Opts, State);
+		{put, Collection, Key, Json, Opts} ->
+			do_Put(Collection, Key, Json, Opts, State);
 		_ ->
 			{error, "Bad request"}
 	end,
@@ -81,11 +83,11 @@ do_Get(Collection, Key, Opts, State) ->
 		{revision, Rev} ->
 			getByRev(Mong, Collection, Key, Rev);
 		_ ->
-			Mong:findOne(Collection, [{"_key", Key}, {"_update", "available"}])		
+			Mong:findOne(Collection, [{"_key", Key}])		
 	end.
 
 getByRev(Mong, Collection, Key, Rev) ->
-	Result = Mong:findOne(Collection, [{"_key", Key}, {"rev", Rev}, {"_update", "available"}]),
+	Result = Mong:findOne(Collection, [{"_key", Key}, {"rev", Rev}]),
 	case Result of
 		{ok, []} ->
 
@@ -107,7 +109,7 @@ getByRev(Mong, Collection, Key, Rev) ->
 						_ ->
 							case parseRecord(Rev, ResultArr) of
 								{true, Fields} ->
-									{ok, [{<<"_key">>, list_to_binary(Key)}, {<<"rev">>, Rev} | Fields]};
+									{ok, [{<<"_key">>, list_to_binary(Key)}, {<<"_rev">>, Rev} | Fields]};
 								{false, _} ->
 									{ok, []}
 							end
@@ -145,4 +147,14 @@ parseRecord(Rev, [R | T], Result) ->
 										fields = [{FieldName, FieldValue} | Result#result.fields]})
 			end
 	end.
-	
+
+
+do_Put(Collection, Key, Json, Opts, State) ->
+%% 	Mong = State#state.mongodb,
+%% 	case Opts of
+%% 		{revision, Rev} ->
+%% 			getByRev(Mong, Collection, Key, Rev);
+%% 		_ ->
+%% 			Mong:findOne(Collection, [{"_key", Key}])		
+%% 	end.
+	ok.
