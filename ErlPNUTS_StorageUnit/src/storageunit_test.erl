@@ -22,7 +22,7 @@ start() ->
 		{database, "testdb"}]).
 
 get_test() ->
-	storageunit:get("user", "Noah", {revision, 3}).
+	storageunit:get("user", "Noah", {revision, 4}).
 
 put_test() ->
 	storageunit:put("user", "Noah6", [{"name", "Noah6"},
