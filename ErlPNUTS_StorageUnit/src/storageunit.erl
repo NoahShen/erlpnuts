@@ -112,7 +112,7 @@ getByRev(Mong, Collection, Key, Rev) ->
 							case parseRecord(Rev, ResultArr) of
 								{true, Fields} ->
 									{ok, [{<<"_key">>, list_to_binary(Key)}, {<<"_rev">>, Rev} | Fields]};
-								{false, _} ->
+								{false, _Fields} ->
 									{ok, []}
 							end
 					end;
@@ -136,7 +136,7 @@ parseRecord(Rev, [R | T], Result) ->
 	
 	case FieldValue of
 		undefined ->
-			parseRecord(Rev, T);
+			parseRecord(Rev, T, Result);
 		_ ->
 			if 
 				Fieldrevision == Rev ->
